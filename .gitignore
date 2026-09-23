@@ -1,0 +1,22 @@
+# Local Python environment and caches
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local datasets and downloaded archives
+datasets/
+*.zip
+*.tar.gz
+*.7z
+
+# Local model checkpoints and generated evaluation output
+models/
+outputs/
+
+# Local editor and OS files
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Local image and voice deepfake detector">
+    <title>VeriGuard — Deepfake Detector</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+    <aside class="app-sidebar" aria-label="Application navigation">
+      <a class="sidebar-brand" href="#dashboard" data-page-link="dashboard"><span class="brand-mark">V</span><span>VeriGuard<small>AUTHENTICITY OS</small></span></a>
+      <div class="sidebar-label">Workspace</div>
+      <nav class="sidebar-nav" aria-label="Workspace pages">
+        <button class="is-active" type="button" data-page="dashboard"><span>▦</span>Dashboard</button>
+        <button type="button" data-page="image"><span>◫</span>Image scan</button>
+        <button type="button" data-page="voice"><span>♫</span>Voice scan</button>
+        <button type="button" data-page="history"><span>◷</span>History</button>
+        <button type="button" data-page="models"><span>◌</span>Models</button>
+      </nav>
+      <div class="sidebar-status"><span class="status-dot"></span><div><strong>Private workspace</strong><small>Files remain on this device</small></div></div>
+      <div class="sidebar-footer"><span>VERIGUARD v1.0</span><small>Image + voice detection</small></div>
+    </aside>
+    <main class="shell">
+      <header class="topbar">
+        <div class="page-title"><span id="page-eyebrow">SECURITY WORKSPACE</span><strong id="page-title">Dashboard</strong></div>
+        <div class="topbar-right"><span class="local-chip">⌁ Local analysis</span><span class="model-badge"><i id="model-indicator"></i><span id="model-status">Checking model…</span></span></div>
+      </header>
+
+      <section id="page-dashboard" class="app-page is-active" data-page-view="dashboard">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Image + voice authenticity analysis</p>
+          <h1>Know what’s <em>real.</em><br>Before it travels.</h1>
+          <p class="intro">A private, local deepfake screening workspace powered by your trained FA3-CLIP image model and CNN-Conformer voice model. Files are processed locally and are not stored.</p>
+          <div class="hero-actions"><a class="primary-link" href="#analyse">New image scan <span>→</span></a><a class="text-link" href="#voice-analyse">Analyse a voice clip <span>↗</span></a></div>
+          <div class="hero-stats" aria-label="Model highlights">
+            <div><strong>98.91%</strong><span>DFFMD test accuracy</span></div>
+            <div><strong>FA³</strong><span>Spatial + frequency cues</span></div>
+            <div><strong>Local</strong><span>Files stay on this device</span></div>
+          </div>
+        </div>
+        <div class="signal-visual" aria-hidden="true">
+          <div class="visual-grid"></div><span class="visual-label top-label">Spatial stream</span><span class="visual-label bottom-label">Frequency stream</span>
+          <div class="orb orb-large"></div><div class="orb orb-small"></div>
+          <div class="face-scan"><span class="scan-line"></span><span class="scan-corner c-one"></span><span class="scan-corner c-two"></span><span class="scan-corner c-three"></span><span class="scan-corner c-four"></span><svg viewBox="0 0 220 240" role="presentation"><path d="M57 103c0-48 25-76 54-76s54 28 54 76v38c0 48-24 75-54 75s-54-27-54-75z"/><path d="M77 115c10-11 20-11 29 0M117 115c10-11 20-11 29 0M87 161c15 10 31 10 47 0M68 88c10-25 57-44 86-11"/><circle cx="92" cy="120" r="2"/><circle cx="132" cy="120" r="2"/><path class="wire" d="M33 100h34M153 100h34M42 170h36M143 170h36"/></svg></div>
+          <div class="signal-tooltip"><span class="pulse-dot"></span><div><strong>Pattern fusion active</strong><small>FA³-CLIP visual signals</small></div></div>
+        </div>
+      </section>
+
+      <section id="dashboard" class="dashboard-section" aria-label="Scan analytics dashboard">
+        <div class="dashboard-heading"><div><p class="eyebrow">Command center</p><h2>Detection overview</h2><p>Live insights from scans saved in this browser.</p></div><div class="dashboard-actions"><a href="#analyse" class="dashboard-action image-action"><span>⌁</span> Scan image</a><a href="#voice-analyse" class="dashboard-action voice-action"><span>◖</span> Scan voice</a></div></div>
+        <div class="activity-grid dashboard-kpis">
+          <article class="activity-card total-card"><span class="activity-icon">⌘</span><p>Total scans</p><strong id="scan-total">0</strong><small id="total-scan-note">No saved scans yet</small></article>
+          <article class="activity-card fake-card"><span class="activity-icon">!</span><p>Flagged synthetic</p><strong id="scan-fake">0</strong><small id="fake-rate">No scan data yet</small></article>
+          <article class="activity-card real-card"><span class="activity-icon">✓</span><p>Likely authentic</p><strong id="scan-real">0</strong><small id="real-rate">No scan data yet</small></article>
+          <article class="activity-card confidence-card"><span class="activity-icon">◔</span><p>Average confidence</p><strong id="average-confidence">—</strong><small>Across all saved scans</small></article>
+        </div>
+        <div class="dashboard-panels">
+          <article class="analytics-panel trend-panel"><div class="panel-heading"><div><span class="panel-kicker">Confidence trend</span><h3>Recent detection scores</h3></div><span id="chart-range" class="chart-range">No scans yet</span></div><div id="confidence-chart-empty" class="chart-empty">Complete a scan to reveal confidence trends.</div><svg id="confidence-chart" class="confidence-chart" viewBox="0 0 640 190" role="img" aria-label="Recent scan confidence chart" hidden><defs><linearGradient id="chart-fill" x1="0" x2="0" y1="0" y2="1"><stop stop-color="#6f7bf7" stop-opacity=".25"/><stop offset="1" stop-color="#6f7bf7" stop-opacity="0"/></linearGradient></defs><path class="chart-grid" d="M25 20H625M25 82H625M25 144H625"/><path id="chart-area" class="chart-area"/><polyline id="chart-line" class="chart-line"/><g id="chart-points"></g><text x="0" y="24">100</text><text x="8" y="86">50</text><text x="14" y="148">0</text></svg><div class="chart-legend"><span><i class="legend-real"></i>Likely authentic</span><span><i class="legend-fake"></i>Flagged synthetic</span><span>Confidence per scan</span></div></article>
+          <article class="analytics-panel risk-panel"><div class="panel-heading"><div><span class="panel-kicker">Risk distribution</span><h3>Authenticity signal</h3></div><span class="live-session"><i></i> Live</span></div><div class="risk-content"><div id="risk-donut" class="risk-donut"><div><strong id="risk-donut-value">—</strong><span>synthetic</span></div></div><div class="risk-stats"><div><span><i class="legend-fake"></i>Flagged</span><strong id="risk-fake-count">0</strong></div><div><span><i class="legend-real"></i>Authentic</span><strong id="risk-real-count">0</strong></div><div><span>Confidence signal</span><strong id="risk-confidence">—</strong></div></div></div><div class="activity-breakdown"><div><span>Scan distribution</span><strong id="distribution-label">Ready for your first scan</strong></div><div class="distribution-track"><span id="fake-distribution"></span><i id="real-distribution"></i></div></div></article>
+        </div>
+      </section>
+      </section>
+
+      <section id="page-voice" class="app-page" data-page-view="voice">
+      <section id="voice-analyse" class="audio-workspace" aria-label="Deepfake voice analysis">
+        <div class="audio-heading"><div><p class="eyebrow">Voice authenticity analysis</p><h2>Screen a voice recording</h2><p>Uses the trained CNN-Conformer model with a 16 kHz log-mel spectrogram.</p></div><span class="audio-model-badge">CNN-Conformer</span></div>
+        <div class="audio-grid">
+          <form id="audio-analysis-form" class="upload-panel audio-upload-panel">
+            <div class="panel-title"><div><p class="step">VOICE / INPUT</p><h2>Upload an audio clip</h2></div><span class="privacy-mark">Private scan</span></div>
+            <input id="audio-input" name="audio" type="file" accept="audio/wav,audio/mpeg,audio/ogg,audio/webm,audio/mp4,audio/x-m4a,audio/flac,.wav,.mp3,.ogg,.webm,.m4a,.flac" hidden>
+            <div id="audio-drop-zone" class="drop-zone audio-drop-zone" tabindex="0" role="button" aria-label="Choose an audio file or drop it here">
+              <div id="audio-empty-upload" class="upload-prompt"><span class="upload-icon">⌁</span><h2>Drop a voice clip here</h2><p>or <span>browse from your device</span></p><small>WAV, MP3, OGG, WebM, M4A, or FLAC · maximum 12 MB</small></div>
+              <div id="audio-selected" class="audio-selected" hidden><span class="audio-file-icon">♫</span><div><strong id="audio-file-name"></strong><small id="audio-file-details"></small></div></div>
+              <button id="audio-replace-button" type="button" class="replace" hidden>Replace audio</button>
+            </div>
+            <audio id="audio-preview" controls hidden></audio>
+            <button id="audio-analyse-button" class="analyse" type="submit" disabled>Run voice authenticity scan <span>→</span></button>
+            <p id="audio-form-message" class="form-message" aria-live="polite"></p>
+          </form>
+          <aside id="audio-result-card" class="audio-result-card idle" aria-live="polite">
+            <div class="panel-title"><div><p class="step">VOICE / RESULT</p><h2>Voice analysis report</h2></div><span id="audio-result-state" class="state-pill">Awaiting audio</span></div>
+            <div id="audio-result-empty" class="result-empty"><span class="scan-icon">♫</span><p>Upload a voice recording to generate<br>an authenticity report.</p></div>
+            <div id="audio-result-data" hidden><div class="audio-verdict"><span id="audio-verdict-icon" class="verdict-icon"></span><div><p id="audio-result-label" class="result-label"></p><p id="audio-verdict-level" class="verdict-level"></p></div><strong id="audio-confidence"></strong></div><p id="audio-result-detail" class="result-detail"></p><div class="confidence-row"><span>Synthetic voice likelihood</span><strong id="audio-fake-probability"></strong></div><div class="meter"><span id="audio-confidence-meter"></span></div><div class="report-meta"><span id="audio-file-meta"></span><span id="audio-inference-time"></span></div><div class="report-identity"><span id="audio-scan-id"></span><span>Model: CNN-Conformer</span></div></div>
+            <p class="note">This result estimates voice synthesis risk; it is not proof of identity or intent.</p>
+          </aside>
+        </div>
+      </section>
+      </section>
+
+      <section id="page-image" class="app-page" data-page-view="image">
+      <ol id="scan-pipeline" class="scan-pipeline" aria-label="Scan pipeline">
+        <li class="pipeline-step is-current"><span>01</span><div><strong>Choose image</strong><small>Ready for input</small></div></li>
+        <li class="pipeline-step"><span>02</span><div><strong>Quality check</strong><small>Validate format and size</small></div></li>
+        <li class="pipeline-step"><span>03</span><div><strong>FA³ analysis</strong><small>Fuse spatial and frequency cues</small></div></li>
+        <li class="pipeline-step"><span>04</span><div><strong>Report</strong><small>Present probability and guidance</small></div></li>
+      </ol>
+
+      <section id="analyse" class="workspace" aria-label="Deepfake image analysis">
+        <form id="analysis-form" class="upload-panel">
+          <div class="panel-title"><div><p class="step">01 / INPUT</p><h2>Upload a face image</h2></div><span class="privacy-mark">Private scan</span></div>
+          <input id="image-input" name="image" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+          <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="Choose an image or drop it here">
+            <div id="empty-upload" class="upload-prompt">
+              <span class="upload-icon">↥</span>
+              <h2>Drop an image here</h2>
+              <p>or <span>browse from your device</span></p>
+              <small>JPG, PNG, or WebP · maximum 12 MB</small>
+            </div>
+            <img id="preview" alt="Selected image preview" hidden>
+            <button id="replace-button" type="button" class="replace" hidden>Replace image</button>
+          </div>
+          <div id="image-details" class="image-details" hidden><span id="file-type"></span><span id="file-resolution"></span><span id="file-size"></span></div>
+          <button id="analyse-button" class="analyse" type="submit" disabled>Run authenticity scan <span>→</span></button>
+          <p id="form-message" class="form-message" aria-live="polite"></p>
+        </form>
+
+        <aside id="result-card" class="result-card idle" aria-live="polite">
+          <div class="panel-title"><div><p class="step">02 / RESULT</p><h2>Analysis report</h2></div><span id="result-state" class="state-pill">Awaiting image</span></div>
+          <div class="result-empty" id="result-empty"><span class="scan-icon">◌</span><p>Upload an image to generate<br>an authenticity report.</p></div>
+          <div id="result-data" hidden>
+            <div class="result-summary"><div id="confidence-ring" class="confidence-ring"><div><strong id="confidence-value"></strong><span>confidence</span></div></div><div class="verdict-row"><span id="verdict-icon" class="verdict-icon"></span><div><p id="result-label" class="result-label"></p><p id="verdict-level" class="verdict-level"></p></div></div></div>
+            <p id="result-detail" class="result-detail"></p>
+            <div class="confidence-row"><span>Decision margin</span><strong id="margin-value"></strong></div>
+            <div class="meter"><span id="confidence-meter"></span></div>
+            <div class="probabilities">
+              <div><span class="dot fake-dot"></span><span>Fake likelihood</span><strong id="fake-probability"></strong></div>
+              <div><span class="dot real-dot"></span><span>Real likelihood</span><strong id="real-probability"></strong></div>
+            </div>
+            <div class="report-meta"><span id="result-image-meta"></span><span id="inference-time"></span></div>
+            <div class="report-identity"><span id="scan-id"></span><span>Model: FA3-CLIP DFFMD</span></div>
+            <div class="next-step"><span class="next-step-icon">✦</span><div><strong id="guidance-title"></strong><p id="guidance-copy"></p></div></div>
+            <div class="report-actions"><button id="download-report" type="button">Download report</button><button id="reset-scan" type="button">New scan</button></div>
+            <details class="result-explainer"><summary>Understanding this result <span>+</span></summary><p>Confidence reflects how strongly this model preferred one class for this image. It does not prove that an image is authentic or manipulated. Use the result alongside source checks and context.</p></details>
+          </div>
+          <p class="note">This is an AI estimate, not proof of authenticity. Consider the source and context.</p>
+        </aside>
+      </section>
+
+      <section id="demos" class="demo-section">
+        <div class="section-heading"><div><p class="eyebrow">Quick start</p><h2>Try a test image</h2></div><p class="section-note">Bundled DFFMD test examples — use them to check the app flow.</p></div>
+        <div id="sample-list" class="sample-list"><p class="sample-loading">Loading included demo images…</p></div>
+      </section>
+      </section>
+
+      <section id="page-history" class="app-page" data-page-view="history">
+      <section id="history" class="history-section dashboard-history">
+        <div class="section-heading"><div><p class="eyebrow">Detection ledger</p><h2>Scan history</h2><p class="section-note">Saved only in this browser. Clear it any time.</p></div><button id="clear-history" type="button" hidden>Clear history</button></div>
+        <div id="history-empty" class="history-empty">Your completed image and voice scans will appear here.</div>
+        <div class="history-table-wrap"><div id="history-list" class="history-list" aria-live="polite"></div></div>
+      </section>
+      </section>
+
+      <section id="page-models" class="app-page" data-page-view="models">
+      <section id="how-it-works" class="how-section">
+        <div><p class="eyebrow">How the scans work</p><h2>Built to look beneath the surface.</h2></div>
+        <div class="method-grid"><article><span>01</span><h3>Local preparation</h3><p>Files are normalized in memory for analysis and are never stored by this app.</p></article><article><span>02</span><h3>Specialized models</h3><p>FA³-CLIP analyses image details and frequency artifacts; CNN-Conformer analyses 128-bin voice spectrograms.</p></article><article><span>03</span><h3>Probability report</h3><p>You receive a transparent real-versus-fake score and a confidence level to support your judgment.</p></article></div>
+      </section>
+      </section>
+
+      <footer><span>VeriFace · FA3-CLIP DFFMD checkpoint</span><span>All analysis runs locally on this machine.</span></footer>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
