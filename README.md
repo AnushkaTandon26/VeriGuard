@@ -18,6 +18,24 @@ Install the audio dependencies once before the first voice scan:
 ./venv/bin/pip install -r requirements.txt
 ```
 
+### Windows
+
+From the project folder, start the local site with:
+
+```powershell
+.\start.ps1
+```
+
+If PowerShell blocks local scripts, use this one-time command for the current
+terminal and then start it again:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\start.ps1
+```
+
+To use another port, run `.\start.ps1 -Port 8080`.
+
 ```bash
 ./venv/bin/python app.py
 ```
