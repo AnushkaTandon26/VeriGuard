@@ -144,7 +144,7 @@ class FA3CLIPForImageClassification(nn.Module):
 def build_model(model_name="openai/clip-vit-base-patch32", num_labels=2, clip_config=None, processor_source=None):
     """Build FA3-CLIP and its CLIP processor."""
     model = FA3CLIPForImageClassification(model_name=model_name, num_labels=num_labels, clip_config=clip_config)
-    processor = CLIPProcessor.from_pretrained(processor_source or model_name, local_files_only=processor_source is not None)
+    processor = CLIPProcessor.from_pretrained(processor_source or model_name, local_files_only=True)
     prompt_inputs = processor(
         text=["a fake face", "a live real face"],
         return_tensors="pt",
@@ -159,21 +159,25 @@ def build_model(model_name="openai/clip-vit-base-patch32", num_labels=2, clip_co
 def load_model(checkpoint_dir, model_name=None):
     """Load a saved FA3-CLIP checkpoint and its processor."""
     checkpoint_dir = Path(checkpoint_dir)
-    config = json.loads((checkpoint_dir / "fa3_config.json").read_text())
-    model_name = model_name or config["model_name"]
+    config_path = checkpoint_dir / "fa3_config.json"
+    config = json.loads(config_path.read_text()) if config_path.is_file() else {}
+    model_name = model_name or config.get("model_name", "openai/clip-vit-base-patch32")
     # The FA3 ``fa3_model.pt`` stores the complete fine-tuned CLIP state, but
     # it needs a CLIP configuration to construct the architecture first. The
     # project keeps an equivalent local CLIP configuration in models/dffmd.
     # This removes the previous internet requirement at inference time.
     local_backbone_dir = checkpoint_dir.parent / "dffmd"
-    if not (local_backbone_dir / "config.json").is_file():
-        raise FileNotFoundError(f"Local CLIP configuration not found: {local_backbone_dir / 'config.json'}")
-    clip_config = CLIPConfig.from_pretrained(local_backbone_dir, local_files_only=True)
+    clip_config = (
+        CLIPConfig.from_pretrained(local_backbone_dir, local_files_only=True)
+        if (local_backbone_dir / "config.json").is_file()
+        else CLIPConfig()
+    )
+    processor_source = checkpoint_dir if (checkpoint_dir / "preprocessor_config.json").is_file() else model_name
     model, processor = build_model(
         model_name=model_name,
         num_labels=config.get("num_labels", 2),
         clip_config=clip_config,
-        processor_source=checkpoint_dir,
+        processor_source=processor_source,
     )
     # Checkpoints saved by the trainer include the processor files. Prefer those
     # local files so image preprocessing stays paired with the trained model.
