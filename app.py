@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import mimetypes
+import threading
 from email.parser import BytesParser
 from email.policy import default
 from http import HTTPStatus
@@ -24,6 +25,7 @@ from inference import FA3Predictor, PredictionError
 ROOT_DIR = Path(__file__).resolve().parent
 STATIC_DIR = ROOT_DIR / "web"
 SAMPLE_DIR = ROOT_DIR / "datasets" / "dffmd_images_sample" / "test"
+AUDIO_SAMPLE_DIR = ROOT_DIR / "datasets" / "audio_samples"
 MAX_UPLOAD_BYTES = 12 * 1024 * 1024
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 ALLOWED_AUDIO_TYPES = {
@@ -70,9 +72,16 @@ class DeepfakeHandler(BaseHTTPRequestHandler):
         if path == "/api/samples":
             self._send_json(HTTPStatus.OK, {"samples": self._demo_samples()})
             return
+        if path == "/api/audio-samples":
+            self._send_json(HTTPStatus.OK, {"samples": self._demo_audio_samples()})
+            return
         if path.startswith("/samples/"):
             relative_path = Path(unquote(path.removeprefix("/samples/")))
             self._send_file((SAMPLE_DIR / relative_path).resolve(), SAMPLE_DIR.resolve())
+            return
+        if path.startswith("/audio-samples/"):
+            relative_path = Path(unquote(path.removeprefix("/audio-samples/")))
+            self._send_file((AUDIO_SAMPLE_DIR / relative_path).resolve(), AUDIO_SAMPLE_DIR.resolve())
             return
         if path in ("/", "/index.html"):
             self._send_file(STATIC_DIR / "index.html")
@@ -86,18 +95,41 @@ class DeepfakeHandler(BaseHTTPRequestHandler):
     def _demo_samples() -> list[dict]:
         """Expose only the small, bundled test examples for the UI demo cards."""
         samples = []
+        real_images = sorted((SAMPLE_DIR / "real").glob("*"))[:2]
+        fake_images = sorted((SAMPLE_DIR / "fake").glob("*"))[:2]
+        for image_path in real_images:
+            if not image_path.is_file() or image_path.suffix.lower() not in {".jpg", ".jpeg", ".png", ".webp"}:
+                continue
+            relative_path = image_path.relative_to(SAMPLE_DIR).as_posix()
+            samples.append({
+                "name": image_path.name,
+                "label": "real",
+                "url": f"/samples/{quote(relative_path)}",
+            })
+        for image_path in fake_images:
+            if not image_path.is_file() or image_path.suffix.lower() not in {".jpg", ".jpeg", ".png", ".webp"}:
+                continue
+            relative_path = image_path.relative_to(SAMPLE_DIR).as_posix()
+            samples.append({
+                "name": image_path.name,
+                "label": "fake",
+                "url": f"/samples/{quote(relative_path)}",
+            })
+        return samples
+
+    @staticmethod
+    def _demo_audio_samples() -> list[dict]:
+        samples = []
         for label in ("real", "fake"):
-            for image_path in sorted((SAMPLE_DIR / label).glob("*"))[:2]:
-                if not image_path.is_file() or image_path.suffix.lower() not in {".jpg", ".jpeg", ".png", ".webp"}:
+            for audio_path in sorted((AUDIO_SAMPLE_DIR / label).glob("*"))[:1]:
+                if not audio_path.is_file() or audio_path.suffix.lower() not in ALLOWED_AUDIO_SUFFIXES:
                     continue
-                relative_path = image_path.relative_to(SAMPLE_DIR).as_posix()
-                samples.append(
-                    {
-                        "name": image_path.name,
-                        "label": label,
-                        "url": f"/samples/{quote(relative_path)}",
-                    }
-                )
+                relative_path = audio_path.relative_to(AUDIO_SAMPLE_DIR).as_posix()
+                samples.append({
+                    "name": audio_path.name,
+                    "label": label,
+                    "url": f"/audio-samples/{quote(relative_path)}",
+                })
         return samples
 
     def do_POST(self) -> None:
@@ -168,6 +200,7 @@ def main() -> None:
     server = ThreadingHTTPServer((args.host, args.port), DeepfakeHandler)
     print(f"FA3 Deepfake Detector is ready at http://{args.host}:{args.port}")
     print("The trained model loads automatically on the first analysis.")
+    threading.Thread(target=DeepfakeHandler.audio_predictor.warm_up, daemon=True).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
