@@ -223,11 +223,13 @@ function renderChart() {
   const scans = history.slice(0, 8).reverse();
   if (!scans.length) {
     chart.hidden = true;
+    chart.style.display = 'none';
     empty.hidden = false;
     chartRange.textContent = 'No scans yet';
     return;
   }
   chart.hidden = false;
+  chart.style.display = 'block';
   empty.hidden = true;
   chartRange.textContent = `${scans.length} recent ${scans.length === 1 ? 'scan' : 'scans'}`;
   const left = 42;
@@ -239,9 +241,22 @@ function renderChart() {
     const y = baseline - ((Math.max(0, Math.min(100, scan.confidence)) / 100) * (baseline - top));
     return { x, y, scan };
   });
-  document.querySelector('#chart-line').setAttribute('points', points.map(({ x, y }) => `${x},${y}`).join(' '));
-  document.querySelector('#chart-area').setAttribute('d', `M ${points[0].x} ${baseline} L ${points.map(({ x, y }) => `${x} ${y}`).join(' L ')} L ${points.at(-1).x} ${baseline} Z`);
-  document.querySelector('#chart-points').innerHTML = points.map(({ x, y, scan }) => `<circle class="chart-point ${scan.label}" cx="${x}" cy="${y}" r="5"><title>${escapeHtml(scan.name)}: ${scan.confidence.toFixed(1)}%</title></circle>`).join('');
+  const lineEl = document.querySelector('#chart-line');
+  lineEl.setAttribute('points', points.map(({ x, y }) => `${x},${y}`).join(' '));
+  lineEl.setAttribute('stroke', '#4f46e5');
+  lineEl.setAttribute('stroke-width', '3.5');
+  lineEl.setAttribute('fill', 'none');
+  lineEl.setAttribute('stroke-linecap', 'round');
+  lineEl.setAttribute('stroke-linejoin', 'round');
+
+  const areaEl = document.querySelector('#chart-area');
+  areaEl.setAttribute('d', `M ${points[0].x} ${baseline} L ${points.map(({ x, y }) => `${x} ${y}`).join(' L ')} L ${points[points.length - 1].x} ${baseline} Z`);
+  areaEl.setAttribute('fill', 'url(#chart-fill)');
+
+  document.querySelector('#chart-points').innerHTML = points.map(({ x, y, scan }) => {
+    const color = scan.label === 'fake' ? '#dc2626' : '#059669';
+    return `<circle class="chart-point ${scan.label}" cx="${x}" cy="${y}" r="5.5" fill="${color}" stroke="#ffffff" stroke-width="2.5"><title>${escapeHtml(scan.name)}: ${scan.confidence.toFixed(1)}%</title></circle>`;
+  }).join('');
 }
 
 function renderDashboard() {
@@ -314,7 +329,15 @@ async function loadDemoSamples() {
     const response = await fetch('/api/samples');
     const data = await response.json();
     if (!data.samples?.length) throw new Error('No bundled demo images were found.');
-    sampleList.innerHTML = data.samples.map((sample) => `<article class="sample-card"><img src="${escapeHtml(sample.url)}" alt="Included ${sample.label} face example"><div><span class="sample-label ${sample.label}">Ground truth: ${sample.label}</span><strong>${escapeHtml(sample.name)}</strong><button type="button" data-sample-url="${escapeHtml(sample.url)}" data-sample-name="${escapeHtml(sample.name)}">Use this image →</button></div></article>`).join('');
+    sampleList.innerHTML = data.samples.map((sample) => `
+      <article class="sample-card">
+        <img src="${escapeHtml(sample.url)}" alt="Included face test image">
+        <div>
+          <strong>${escapeHtml(sample.name)}</strong>
+          <button type="button" data-sample-url="${escapeHtml(sample.url)}" data-sample-name="${escapeHtml(sample.name)}">Use this image →</button>
+        </div>
+      </article>
+    `).join('');
     sampleList.querySelectorAll('button[data-sample-url]').forEach((button) => {
       button.addEventListener('click', async () => {
         button.disabled = true;
@@ -324,6 +347,7 @@ async function loadDemoSamples() {
           const blob = await imageResponse.blob();
           showFile(new File([blob], button.dataset.sampleName, { type: blob.type || 'image/jpeg' }));
           document.querySelector('#analyse').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          form.requestSubmit();
         } finally {
           button.disabled = false;
           button.textContent = 'Use this image →';
@@ -399,6 +423,7 @@ const audioResultCard = document.querySelector('#audio-result-card');
 const audioResultState = document.querySelector('#audio-result-state');
 const audioResultEmpty = document.querySelector('#audio-result-empty');
 const audioResultData = document.querySelector('#audio-result-data');
+const audioSampleList = document.querySelector('#audio-sample-list');
 const audioExtensions = ['wav', 'mp3', 'ogg', 'webm', 'm4a', 'mp4', 'flac'];
 let selectedAudio;
 let audioUrl;
@@ -450,15 +475,53 @@ audioInput.addEventListener('change', () => showAudioFile(audioInput.files[0]));
 ['dragleave', 'drop'].forEach((name) => audioZone.addEventListener(name, (event) => { event.preventDefault(); audioZone.classList.remove('dragging'); }));
 audioZone.addEventListener('drop', (event) => showAudioFile(event.dataTransfer.files[0]));
 
+async function loadAudioDemoSamples() {
+  try {
+    const response = await fetch('/api/audio-samples');
+    const data = await response.json();
+    if (!data.samples?.length) throw new Error('No bundled voice samples were found.');
+    audioSampleList.innerHTML = data.samples.map((sample) => `
+      <article class="audio-sample-card">
+        <div class="audio-card-head">
+          <div class="audio-badge-icon">♫</div>
+          <div class="audio-title-wrap">
+            <strong>${escapeHtml(sample.name)}</strong>
+            <span class="audio-type-tag ${sample.label}">${sample.label === 'fake' ? 'Synthetic Clone' : 'Natural Voice'}</span>
+          </div>
+        </div>
+        <audio controls preload="metadata" src="${escapeHtml(sample.url)}"></audio>
+        <button type="button" class="btn-use-audio" data-audio-sample-url="${escapeHtml(sample.url)}" data-audio-sample-name="${escapeHtml(sample.name)}">Use this voice sample →</button>
+      </article>
+    `).join('');
+    audioSampleList.querySelectorAll('button[data-audio-sample-url]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        try {
+          const audioResponse = await fetch(button.dataset.audioSampleUrl);
+          const blob = await audioResponse.blob();
+          showAudioFile(new File([blob], button.dataset.audioSampleName, { type: blob.type || 'audio/wav' }));
+          document.querySelector('#voice-analyse').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          audioForm.requestSubmit();
+        } finally {
+          button.disabled = false;
+        }
+      });
+    });
+  } catch (error) {
+    audioSampleList.innerHTML = `<p class="sample-loading">${escapeHtml(error.message)}</p>`;
+  }
+}
+
 function showAudioResult(data) {
   const isFake = data.label === 'fake';
+  const isFixture = Boolean(data.demo_fixture);
   audioResultCard.className = `audio-result-card ${isFake ? 'fake' : 'real'}`;
   audioResultState.textContent = 'Complete';
   document.querySelector('#audio-verdict-icon').textContent = isFake ? '!' : '✓';
-  document.querySelector('#audio-result-label').textContent = isFake ? 'Likely synthetic voice' : 'Likely human voice';
+  document.querySelector('#audio-result-label').textContent = isFixture ? 'Synthetic test result' : isFake ? 'Likely synthetic voice' : 'Likely human voice';
   document.querySelector('#audio-verdict-level').textContent = `${data.assessment[0].toUpperCase()}${data.assessment.slice(1)} confidence assessment`;
   document.querySelector('#audio-confidence').textContent = `${data.confidence}%`;
-  document.querySelector('#audio-result-detail').textContent = isFake
+  document.querySelector('#audio-result-detail').textContent = isFixture ? data.notice : isFake
     ? 'The model detected voice patterns associated with audio synthesis or manipulation.'
     : 'The model found stronger evidence of a natural voice signal.';
   document.querySelector('#audio-fake-probability').textContent = `${data.probabilities.fake}%`;
@@ -479,7 +542,7 @@ audioForm.addEventListener('submit', async (event) => {
   audioZone.classList.add('scanning');
   audioResultCard.className = 'audio-result-card loading';
   audioResultState.textContent = 'Scanning';
-  audioResultEmpty.innerHTML = '<span class="loader"></span><p>Loading the CNN-Conformer model and inspecting voice patterns…</p>';
+  audioResultEmpty.innerHTML = '<span class="loader"></span><p>Checking the uploaded voice sample…</p>';
   audioResultEmpty.hidden = false;
   audioResultData.hidden = true;
   const body = new FormData();
@@ -503,3 +566,5 @@ audioForm.addEventListener('submit', async (event) => {
     audioButton.innerHTML = 'Run voice authenticity scan <span>→</span>';
   }
 });
+
+loadAudioDemoSamples();
